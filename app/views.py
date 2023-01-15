@@ -1,7 +1,4 @@
-from django.shortcuts import render
-
 # Create your views here.
-from django.http import HttpResponse
 from rest_framework.decorators import action
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.schemas.openapi import AutoSchema
@@ -17,7 +14,7 @@ class QuestionList(ListCreateAPIView):
     schema = AutoSchema(tags=['Questions'])
 
 
-class QuestionDetail(ModelViewSet):
+class QuestionDetail(RetrieveUpdateDestroyAPIView):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
     schema = AutoSchema(tags=['Questions'])

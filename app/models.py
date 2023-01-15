@@ -4,6 +4,9 @@ from django.db import models
 
 
 class Question(models.Model):
+    class Meta:
+        app_label = 'app'
+
     question_text = models.CharField(max_length=500)
     pub_date = models.DateTimeField('date published', default=datetime.now)
     response1 = models.ForeignKey('Response', on_delete=models.CASCADE, related_name='response1')
@@ -16,6 +19,9 @@ class Question(models.Model):
 
 
 class Response(models.Model):
+    class Meta:
+        app_label = 'app'
+
     response_text = models.CharField(max_length=500)
     choices = models.IntegerField(default=0)
 
