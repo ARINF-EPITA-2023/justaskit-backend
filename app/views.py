@@ -1,11 +1,13 @@
 # Create your views here.
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.schemas.openapi import AutoSchema
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Question, Response
-from .serializers import QuestionSerializer, ResponseSerializer
+from .serializers import QuestionSerializer, ResponseSerializer, QuestionPostSerializer
 
 
 class QuestionList(ListCreateAPIView):
@@ -14,9 +16,44 @@ class QuestionList(ListCreateAPIView):
     schema = AutoSchema(tags=['Questions'])
 
 
-class QuestionDetail(RetrieveUpdateDestroyAPIView):
+class QuestionDetail(ModelViewSet):
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return QuestionDetail
+        else:
+            return QuestionPostSerializer
+
+    @action(detail=True, methods=['post'])
+    def post(self, request):
+        serializer = QuestionPostSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['get'])
+    def get(self, request, pk):
+        question = Question.objects.get(pk=pk)
+        serializer = QuestionSerializer(question)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['put'])
+    def put(self, request, pk):
+        QuestionSerializer
+        question = Question.objects.get(pk=pk)
+        serializer = QuestionSerializer(question, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['delete'])
+    def delete(self, request, pk):
+        question = Question.objects.get(pk=pk)
+        question.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     queryset = Question.objects.all()
-    serializer_class = QuestionSerializer
     schema = AutoSchema(tags=['Questions'])
 
 

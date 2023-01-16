@@ -13,3 +13,12 @@ class ResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Response
         fields = ('id', 'response_text', 'choices')
+
+
+class QuestionPostSerializer(serializers.ModelSerializer):
+    response1 = ResponseSerializer()
+    response2 = ResponseSerializer()
+
+    class Meta:
+        model = Question
+        fields = ('question_text', 'response1', 'response2')
