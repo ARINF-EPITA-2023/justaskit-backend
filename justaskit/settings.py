@@ -36,7 +36,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'redis'
+    'redis',
+    'django_redis',
 ]
 
 MIDDLEWARE = [
@@ -76,6 +77,12 @@ WSGI_APPLICATION = 'justaskit.wsgi.application'
 REDIS_HOST = os.environ.get('DJANGO_DB_HOST'),
 REDIS_PORT = os.environ.get('DJANGO_DB_PORT'),
 REDIS_DB = os.environ.get('DJANGO_DB_NAME'),
+DATABASES = {
+    'default': {
+        'ENGINE': 'django_redis.db.backends.redis',
+        'LOCATION': f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}",
+    }
+}
 
 CACHES = {
     "default": {

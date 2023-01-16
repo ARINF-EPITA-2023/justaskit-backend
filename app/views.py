@@ -11,25 +11,25 @@ from .serializers import QuestionSerializer, ResponseSerializer, QuestionPostSer
 
 
 class QuestionList(ListCreateAPIView):
-    queryset = Question.objects.order_by('?')
-    serializer_class = QuestionSerializer
-    schema = AutoSchema(tags=['Questions'])
-
-
-class QuestionDetail(ModelViewSet):
     def get_serializer_class(self):
-        if self.action == 'create':
-            return QuestionDetail
-        else:
+        if self.request.data is not None:
             return QuestionPostSerializer
+        else:
+            return QuestionSerializer
 
-    @action(detail=True, methods=['post'])
-    def post(self, request):
+    def create(self, request, *args, **kwargs):
         serializer = QuestionPostSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    queryset = Question.objects.order_by('?')
+
+    schema = AutoSchema(tags=['Questions'])
+
+
+class QuestionDetail(ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def get(self, request, pk):
@@ -39,7 +39,6 @@ class QuestionDetail(ModelViewSet):
 
     @action(detail=True, methods=['put'])
     def put(self, request, pk):
-        QuestionSerializer
         question = Question.objects.get(pk=pk)
         serializer = QuestionSerializer(question, data=request.data)
         if serializer.is_valid():
@@ -55,6 +54,7 @@ class QuestionDetail(ModelViewSet):
 
     queryset = Question.objects.all()
     schema = AutoSchema(tags=['Questions'])
+    serializer_class = QuestionSerializer
 
 
 class ResponseDetail(ModelViewSet):

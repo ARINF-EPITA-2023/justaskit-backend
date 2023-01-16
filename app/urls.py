@@ -16,7 +16,7 @@ urlpatterns = [
                                   ), name="swagger-ui"),
     path('questions', QuestionList.as_view(), name='questions'),
     path('questions/<int:pk>',
-         csrf_exempt(QuestionDetail.as_view({'put': 'put', 'get': 'get', 'post': 'postQuestion', 'delete': 'delete'})),
+         csrf_exempt(QuestionDetail.as_view({'put': 'put', 'get': 'get', 'delete': 'delete'})),
          name='question detail'),
     path('responses/<int:pk>', csrf_exempt(ResponseDetail.as_view({'put': 'update_choices'})), name='response edit'),
 
