@@ -17,7 +17,7 @@ class ResponseSerializer:
 
 
 class QuestionSerializer:
-    id: int
+    id: str
     question_text: str
     pub_date: datetime
     response1: ResponseSerializer
