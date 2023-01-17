@@ -1,70 +1,65 @@
 # Create your views here.
-from rest_framework import status
+import json
+import os
+import random
+import uuid
+
+import redis
+from django.http import JsonResponse
 from rest_framework.decorators import action
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from rest_framework.schemas.openapi import AutoSchema
+from rest_framework.response import Response
+from rest_framework.status import HTTP_200_OK, HTTP_204_NO_CONTENT
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from .models import Question, Response
-from .serializers import QuestionSerializer, ResponseSerializer, QuestionPostSerializer
+from .models import Question
+from .serializers import QuestionPostSerializer, QuestionSerializer
 
 
-class QuestionList(ListCreateAPIView):
-    def get_serializer_class(self):
-        if self.request.data is not None:
-            return QuestionPostSerializer
-        else:
-            return QuestionSerializer
+class QuestionList(APIView):
+    redis_instance = redis.StrictRedis(host=os.environ.get('REDIS_HOST'), port=int(os.environ.get('REDIS_PORT')), password=os.environ.get('REDIS_PASSWORD'), db=0)
 
-    def create(self, request, *args, **kwargs):
-        serializer = QuestionPostSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, *args, **kwargs):
+        question = QuestionPostSerializer.from_json(request.data).to_model()
+        question.id = uuid.uuid4().__str__()
+        self.redis_instance.set(question.id, question.to_json())
+        return JsonResponse(data=question.to_dict(), status=HTTP_200_OK)
 
-    queryset = Question.objects.order_by('?')
+    def get(self, request, format=None):
+        questions = []
+        for key in self.redis_instance.keys("*"):
+            json_dct = json.loads(self.redis_instance.get(key))
+            question = Question.from_json(json_dct)
+            questions.append(question)
+        random.shuffle(questions)
+        data = [question.to_dict() for question in questions]
+        return JsonResponse(data=data, status=HTTP_200_OK, safe=False)
 
-    schema = AutoSchema(tags=['Questions'])
 
-
-class QuestionDetail(ModelViewSet):
+class QuestionDetail(APIView):
+    redis_instance = redis.StrictRedis(host=os.environ.get('REDIS_HOST'), port=int(os.environ.get('REDIS_PORT')), password=os.environ.get('REDIS_PASSWORD'), db=0)
 
     @action(detail=True, methods=['get'])
     def get(self, request, pk):
-        question = Question.objects.get(pk=pk)
-        serializer = QuestionSerializer(question)
-        return Response(serializer.data)
+        json_dct = json.loads(self.redis_instance.get(pk))
+        question = Question.from_json(json_dct).to_dict()
+        return JsonResponse(data=question, status=HTTP_200_OK)
 
     @action(detail=True, methods=['put'])
     def put(self, request, pk):
-        question = Question.objects.get(pk=pk)
-        serializer = QuestionSerializer(question, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        question = self.redis_instance.exists(pk)
+        if question:
+            question = QuestionSerializer.from_json(request.data).to_model()
+            self.redis_instance.set(pk, question.to_json())
+        return JsonResponse(data=request.data, status=HTTP_200_OK)
 
     @action(detail=True, methods=['delete'])
     def delete(self, request, pk):
-        question = Question.objects.get(pk=pk)
-        question.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    queryset = Question.objects.all()
-    schema = AutoSchema(tags=['Questions'])
-    serializer_class = QuestionSerializer
+        self.redis_instance.delete(pk)
+        return Response(HTTP_204_NO_CONTENT)
 
 
-class ResponseDetail(ModelViewSet):
-    @action(detail=True, methods=['put'])
-    def updateChoices(self, request, pk):
-        response = Response.objects.get(pk=pk)
-        response.choices = request.data['choices']
-        response.save()
-        return Response(response)
-
-    queryset = Response.objects.all()
-    serializer_class = ResponseSerializer
-    schema = AutoSchema(tags=['Responses'])
+class HelloView(APIView):
+    @action(detail=True, methods=['get'])
+    def get(self, request):
+        return Response(data="Hello World!", status=HTTP_200_OK)

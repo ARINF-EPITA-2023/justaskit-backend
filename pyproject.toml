@@ -13,6 +13,7 @@ pyyaml = "^6.0"
 uritemplate = "^4.1.1"
 psycopg2-binary = "^2.9.5"
 django-redis = "^5.2.0"
+drf-yasg = "^1.21.4"
 
 
 [build-system]
