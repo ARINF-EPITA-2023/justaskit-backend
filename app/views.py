@@ -43,7 +43,7 @@ class QuestionDetail(APIView):
     def get(self, request, pk):
         json_dct = json.loads(self.redis_instance.get(pk))
         question = Question.from_json(json_dct).to_dict()
-        return JsonResponse(data=question, status=HTTP_200_OK)
+        return JsonResponse(data=question, status=HTTP_200_OK, safe=False)
 
     @action(detail=True, methods=['put'])
     def put(self, request, pk):
@@ -51,7 +51,7 @@ class QuestionDetail(APIView):
         if question:
             question = QuestionSerializer.from_json(request.data).to_model()
             self.redis_instance.set(pk, question.to_json())
-        return JsonResponse(data=request.data, status=HTTP_200_OK)
+        return JsonResponse(data=request.data, status=HTTP_200_OK, safe=False)
 
     @action(detail=True, methods=['delete'])
     def delete(self, request, pk):
