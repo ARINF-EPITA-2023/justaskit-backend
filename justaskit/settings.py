@@ -106,3 +106,4 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Imag
 STATIC_URL = "static/"
+
